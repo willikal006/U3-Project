@@ -1,0 +1,68 @@
+def choose_new_target(self):
+    """Choose a new target monster type"""
+    # Step 1: Collect types of monsters still alive
+    alive_types = [monster.type for monster in self.monster_group]
+
+    # Step 2: If list not empty, pick a random type from it
+    if alive_types:
+        self.target_monster_type = random.choice(alive_types)
+    else:
+        # If no monsters alive, fallback to random 0-3 (optional)
+        self.target_monster_type = random.randint(0, 3)
+
+    # Step 3: Update the target monster image
+    self.target_monster_image = self.target_monster_images[self.target_monster_type]
+def start_new_round(self):
+    """Start a new round"""
+    self.monster_group.empty()
+    self.player.reset()
+    self.round_number += 1
+    self.round_time = 0
+    self.frame_count = 0
+    if self.next_level_sound:
+        self.next_level_sound.play()
+
+    # Nested loop to spawn monsters
+    for monster_type in range(4):  # 0=blue, 1=green, 2=purple, 3=yellow
+        for i in range(self.round_number):
+            x = random.randint(0, WINDOW_WIDTH)
+            y = random.randint(100, WINDOW_HEIGHT - 100)
+            image = self.target_monster_images[monster_type]
+            new_monster = Monster(x, y, image, monster_type)
+            self.monster_group.add(new_monster)
+
+    self.choose_new_target()
+def check_collisions(self):
+    """Check if the player touches any monster and react accordingly"""
+    collided_monster = pygame.sprite.spritecollideany(self.player, self.monster_group)
+
+    if collided_monster is not None:
+        if collided_monster.type == self.target_monster_type:
+            # Correct catch
+            collided_monster.kill()
+            if self.player.catch_sound:
+                self.player.catch_sound.play()
+            self.score += 100
+
+            if len(self.monster_group) == 0:
+                self.start_new_round()
+            else:
+                self.choose_new_target()
+        else:
+            # Wrong catch
+            self.player.lives -= 1
+            if self.player.die_sound:
+                self.player.die_sound.play()
+
+            if self.player.lives == 0:
+                # Pause game and show game over message
+                pause_game("GAME OVER", "Press Enter to quit")
+                # You will need to handle setting running = False in your main loop accordingly
+def update(self):
+    """Update the game object"""
+    self.frame_count += 1
+    if self.frame_count == FPS:
+        self.round_time += 1
+        self.frame_count = 0
+
+    self.check_collisions()  # <-- uncommented to enable collision detection
